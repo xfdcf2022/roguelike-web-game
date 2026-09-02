@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>深渊生存者 · Abyss Survivor</title>
+  <link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="1280" height="720"></canvas>
+
+  <!-- ===== 战斗 HUD ===== -->
+  <div id="hud" class="hidden">
+    <div id="xp-wrap"><div id="xp-fill"></div></div>
+    <div id="lv-badge">Lv <b id="lv-num">1</b></div>
+    <div id="timer">00:00</div>
+    <div id="kills-wrap">
+      <svg viewBox="0 0 24 24"><path d="M12 2l2.4 5 5.6.7-4.1 3.8 1.1 5.5-5-2.8-5 2.8 1.1-5.5L4 7.7 9.6 7z"/></svg>
+      <b id="kills">0</b>
+    </div>
+    <div id="boss-wrap" class="hidden">
+      <div id="boss-name"></div>
+      <div id="boss-bar"><div id="boss-fill"></div></div>
+    </div>
+    <div id="gold-wrap"><span class="coin-dot"></span><b id="gold-num">0</b></div>
+    <div id="hp-wrap"><div id="hp-fill"></div><span id="hp-text">100</span></div>
+    <div id="guard-ind" title="濒死守护: 致命伤害时免死一次">
+      <svg viewBox="0 0 24 24"><path d="M12 2l8 3.2v5.6c0 5-3.4 9.2-8 10.8-4.6-1.6-8-5.8-8-10.8V5.2z"/><path d="M12 6.2l4.4 1.8v3c0 2.8-1.9 5.2-4.4 6.2-2.5-1-4.4-3.4-4.4-6.2V8z" fill="#0a0c12" opacity=".5"/></svg>
+    </div>
+    <div id="combo-wrap"><b id="combo-num">x5</b><span>COMBO</span></div>
+    <div id="weapon-bar"></div>
+    <div id="ult-wrap" title="深渊爆发 (E)">
+      <svg viewBox="0 0 24 24"><path d="M12 1.5 9.4 8.6 2 11l7.4 2.4L12 20.5l2.6-7.1L22 11l-7.4-2.4z"/><circle cx="12" cy="11" r="2.2" fill="#0a0c12" opacity=".45"/></svg>
+      <div id="ult-track"><div id="ult-fill"></div></div>
+      <b id="ult-key">E</b>
+    </div>
+    <div id="announce"></div>
+    <!-- 移动端冲刺按钮 -->
+    <button id="dash-btn" title="闪避冲刺" aria-label="闪避冲刺">
+      <svg viewBox="0 0 24 24"><path d="M5 4l7 8-7 8M13 4l7 8-7 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <i id="dash-cd"></i>
+    </button>
+    <!-- 移动端深渊爆发按钮 -->
+    <button id="ult-btn" title="深渊爆发" aria-label="深渊爆发">
+      <svg viewBox="0 0 24 24"><path d="M12 1.5 9.4 8.6 2 11l7.4 2.4L12 20.5l2.6-7.1L22 11l-7.4-2.4z"/><circle cx="12" cy="11" r="2.2" fill="#0a0c12" opacity=".45"/></svg>
+    </button>
+  </div>
+
+  <div id="corner-btns">
+    <button id="mute-btn" title="静音 (M)">
+      <svg class="ic-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wav" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="ic-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button id="pause-btn" title="暂停 (P)">
+      <svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+    </button>
+  </div>
+
+  <!-- ===== 主菜单 ===== -->
+  <div id="menu" class="overlay">
+    <div class="menu-box">
+      <h1 class="title">深渊生存者</h1>
+      <p class="tagline">ABYSS&nbsp;SURVIVOR</p>
+      <p class="intro">你被困于亡灵荒原的最深处。<br>移动躲避, 武器全自动攻击, 拾取魂晶不断变强——<br>坚持 10 分钟, 斩杀<b>深渊君主</b>, 逃离此地。</p>
+      <div class="feature-row">
+        <div class="feat"><span class="f-ic"></span>全自动战斗</div>
+        <div class="feat"><span class="f-ic"></span>升级三选一 Build</div>
+        <div class="feat"><span class="f-ic"></span>雷暴天灾 · Boss 登场演出</div>
+        <div class="feat"><span class="f-ic"></span>5 王 · 无尽深渊</div>
+      </div>
+
+      <button id="start-btn" class="big-btn">开 始 远 征</button>
+
+      <!-- ===== 圣所 · 局外永久强化 ===== -->
+      <div id="sanct-sec">
+        <div class="sanct-head">
+          <span class="s-line"></span><b>圣 所 · 永 久 强 化</b><span class="s-line"></span>
+          <span id="menu-gold-wrap" title="金币余额"><span class="coin-dot"></span><b id="menu-gold">0</b></span>
+        </div>
+        <div id="shop-view"></div>
+        <p class="shop-hint">金币在远征中掉落, 结算后自动存入圣所 · 强化永久生效</p>
+      </div>
+
+      <p class="hint">WASD / 方向键 移动 &nbsp;·&nbsp; 空格 闪避冲刺 &nbsp;·&nbsp; E 深渊爆发 &nbsp;·&nbsp; 1/2/3 选择强化 &nbsp;·&nbsp; P 暂停 &nbsp;·&nbsp; M 静音 &nbsp;·&nbsp; 触屏: 摇杆移动 + 冲刺/爆发键</p>
+    </div>
+  </div>
+
+  <!-- ===== 升级三选一 ===== -->
+  <div id="levelup" class="overlay hidden">
+    <div class="lv-box">
+      <h2>等 级 提 升</h2>
+      <p class="sub">选择一项祝福 &nbsp;( 按 1 / 2 / 3 )</p>
+      <div id="cards"></div>
+    </div>
+  </div>
+
+  <!-- ===== 暂停 ===== -->
+  <div id="pause" class="overlay hidden">
+    <div class="menu-box small">
+      <h2>已 暂 停</h2>
+      <div id="build-view"></div>
+      <button id="resume-btn" class="big-btn">继 续</button>
+      <button id="restart-btn-p" class="big-btn ghost">重新开始</button>
+    </div>
+  </div>
+
+  <!-- ===== 死亡结算 ===== -->
+  <div id="gameover" class="overlay hidden">
+    <div class="menu-box">
+      <h2 class="dead">你 被 深 渊 吞 没</h2>
+      <div class="stats" id="go-stats"></div>
+      <div class="btn-row">
+        <button id="restart-btn" class="big-btn">再 战 一 局 &nbsp;(R)</button>
+        <button id="go-menu-btn" class="big-btn ghost">返 回 圣 所</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 胜利结算 ===== -->
+  <div id="victory" class="overlay hidden">
+    <div class="menu-box">
+      <h2 class="win">深 渊 君 主 · 陨 落</h2>
+      <div class="stats" id="vic-stats"></div>
+      <div class="btn-row">
+        <button id="vic-restart" class="big-btn">开 启 新 远 征 &nbsp;(R)</button>
+        <button id="vic-menu-btn" class="big-btn ghost">返 回 圣 所</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="game.js?v=14"></script>
+</body>
+</html>
