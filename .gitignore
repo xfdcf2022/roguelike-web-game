@@ -1,0 +1,13 @@
+# deps
+node_modules/
+
+# electron-builder output
+dist/
+
+# macOS
+.DS_Store
+
+# steam artifacts (generated locally by steamcmd, never commit)
+steam_appid.txt
+scripts/upload_*.vdf
+steam_build/
